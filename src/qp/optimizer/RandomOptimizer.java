@@ -426,9 +426,11 @@ public class RandomOptimizer {
 
                 case JoinType.BLOCKNESTED:
 
-                    NestedJoin bj = new NestedJoin((Join) node);
-                /* + other code */
-                    return bj;
+                    BlockNestedJoin bnj = new BlockNestedJoin((Join) node);
+                    bnj.setLeft(left);
+                    bnj.setRight(right);
+                    bnj.setNumBuff(numbuff);
+                    return bnj;
 
                 case JoinType.SORTMERGE:
 

@@ -139,6 +139,7 @@ public class PlanCost {
         /** number of buffers allotted to this join**/
 
         int numbuff = BufferManager.getBuffersPerJoin();
+        int blockSize = (numbuff - 2);
 
         int joincost;
 
@@ -149,13 +150,13 @@ public class PlanCost {
                 joincost = leftpages * rightpages;
                 break;
             case JoinType.BLOCKNESTED:
-                joincost = 0;
+                joincost = leftpages + ((int) Math.ceil(leftpages / (1.0 * blockSize))) * rightpages;
                 break;
             case JoinType.SORTMERGE:
-                joincost = 0;
+                joincost = Integer.MAX_VALUE;
                 break;
             case JoinType.HASHJOIN:
-                joincost = 0;
+                joincost = Integer.MAX_VALUE;
                 break;
             default:
                 joincost = 0;
