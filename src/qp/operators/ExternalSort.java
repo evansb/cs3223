@@ -17,11 +17,13 @@ public class ExternalSort extends Operator {
     private List<Order> sortOrders;
     private Comparator<Tuple> comparator;
 
-    private ArrayList<Batch> sortedDataInBatch;
-    private int outputBatchIndex;
-
     private int fileNum;
     private List<File> sortedRuns;
+
+    private ObjectInputStream iteratorInputStream;
+
+    private int initialNumTuples;
+    private int tuplesProcessedThisRound;
 
     public ExternalSort(Operator source, List<Order> sortOrders, int numBuffers) {
         super(OpType.SORT);
@@ -50,15 +52,26 @@ public class ExternalSort extends Operator {
     }
 
     public Batch next() {
-        if (outputBatchIndex >= sortedDataInBatch.size()) {
-            return null;
-        }
+        assert sortedRuns.size() == 1;
+        try {
+            if (iteratorInputStream == null) {
+                iteratorInputStream = new ObjectInputStream(new FileInputStream(sortedRuns.get(0)));
+            }
 
-        return sortedDataInBatch.get(outputBatchIndex++);
+            return readBatch(iteratorInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean close() {
         clearSortedRuns(sortedRuns);
+        try {
+            iteratorInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return super.close();
     }
 
@@ -67,10 +80,12 @@ public class ExternalSort extends Operator {
 
 
     private void generateSortedRuns() {
+        initialNumTuples = 0;
         Batch currentBatch = source.next();
         while (currentBatch != null) {
             ArrayList<Batch> run = new ArrayList<>();
             for (int i = 0; i < numBuffers; i++) {
+                initialNumTuples += currentBatch.size();
                 run.add(currentBatch);
                 currentBatch = source.next();
                 if (currentBatch == null) {
@@ -87,9 +102,10 @@ public class ExternalSort extends Operator {
     private void executeMerge() {
         int numBuffersAvailable = numBuffers - 1;
 
-        while (sortedRuns.size() > 0) {
+        while (sortedRuns.size() > 1) {
             int numberOfSortedRuns = sortedRuns.size();
             List<File> newSortedRuns = new ArrayList<>();
+            tuplesProcessedThisRound = 0;
             for (int subRound = 0; subRound * numBuffersAvailable < numberOfSortedRuns; subRound++) {
                 int startIdx = subRound * numBuffersAvailable;
                 int endIdx = (subRound + 1) * numBuffersAvailable;
@@ -99,6 +115,8 @@ public class ExternalSort extends Operator {
                 File resultSortedRun = mergeSortedRuns(runsToSort);
                 newSortedRuns.add(resultSortedRun);
             }
+
+            assert initialNumTuples == tuplesProcessedThisRound;
 
             // Replace sorted runs with the newer batch
             clearSortedRuns(sortedRuns);
@@ -150,17 +168,33 @@ public class ExternalSort extends Operator {
 
         while (true) {
             Tuple smallest = null;
+            int indexOfSmallest = 0;
             for (int i = 0; i < inputBuffers.size(); i++) {
                 Batch batch = inputBuffers.get(i);
+                if (batchPointers[i] >= batch.size()) {
+                    continue;
+                }
+
                 Tuple tuple = batch.elementAt(batchPointers[i]);
                 if (smallest == null || comparator.compare(tuple, smallest) < 0) {
                     smallest = tuple;
+                    indexOfSmallest = i;
                 }
             }
             if (smallest == null) {
                 break;
             }
+
+            batchPointers[indexOfSmallest] += 1;
+            if (batchPointers[indexOfSmallest] == inputBuffers.get(indexOfSmallest).capacity()) {
+                Batch batch = readBatch(inputStreams.get(indexOfSmallest));
+                if (batch != null) {
+                    inputBuffers.set(indexOfSmallest, batch);
+                    batchPointers[indexOfSmallest] = 0;
+                }
+            }
             outputBuffer.add(smallest);
+            tuplesProcessedThisRound++;
 
             if (outputBuffer.isFull()) {
                 if (outputFile == null) {
@@ -168,8 +202,13 @@ public class ExternalSort extends Operator {
                 } else {
                     appendRun(outputBuffer, outputFile);
                 }
-
             }
+        }
+
+        if (outputFile == null) {
+            outputFile = writeRun(Arrays.asList(outputBuffer));
+        } else {
+            appendRun(outputBuffer, outputFile);
         }
 
         return outputFile;
@@ -208,8 +247,11 @@ public class ExternalSort extends Operator {
 
     private void appendRun(Batch run, File destination) {
         try {
+            long before = destination.length();
             ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(destination, true));
             out.writeObject(run);
+            long after = destination.length();
+            assert before + 100 < after;
             out.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -220,6 +262,8 @@ public class ExternalSort extends Operator {
         try {
             Batch batch = (Batch) inputStream.readObject();
             return batch;
+        } catch (EOFException e) {
+            return null;
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             assert false;

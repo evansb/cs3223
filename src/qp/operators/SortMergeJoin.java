@@ -4,6 +4,8 @@ import qp.utils.Batch;
 import qp.utils.Tuple;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by michaellimantara on 21/3/17.
@@ -16,7 +18,8 @@ public class SortMergeJoin extends Join {
 
     @Override
     public boolean open() {
-        ExternalSort sort = new ExternalSort(left, null, numBuff);
+        List<Order> sortOrders = Arrays.asList(new Order(getCondition().getLhs(), Order.OrderType.ASC));
+        ExternalSort sort = new ExternalSort(left, sortOrders, numBuff);
         if (sort.open()) {
             Batch batch = sort.next();
             ArrayList<Batch> results = new ArrayList<>();
