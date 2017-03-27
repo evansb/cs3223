@@ -1,6 +1,9 @@
 
 import java_cup.runtime.*;
 import java.util.*;
+import qp.utils.*;
+import qp.operators.Order;
+import qp.operators.Order.OrderType;
 
 //import SMA5503.IR.*;
 
@@ -39,7 +42,7 @@ action code {:
 terminal 	TokenValue ID;
 terminal        COMMA,SEMI,DOT,STAR;
 terminal      	LESSTHAN, GREATERTHAN,LTOE,GTOE,EQUAL,NOTEQUAL,AND,OR;     
-terminal	SELECT,FROM,WHERE,ORDERBY,DISTINCT,ASCENDING,DESCENDING;
+terminal	SELECT,FROM,WHERE,ORDERBY,DISTINCT,ASC,DESC;
 terminal 	TokenValue STRINGLIT;
 
 /* Non terminals */	
@@ -48,16 +51,16 @@ nonterminal Vector attlist;
 nonterminal Attribute attribute;
 nonterminal Vector tablelist;
 nonterminal Vector conditionlist;
+nonterminal Vector orderinglist;
 nonterminal Condition condition;
 nonterminal Condition op;
-nonterminal boolean ordering;
+nonterminal OrderType ordering;
 
 /* The grammar */
 
-sqlquery ::= sqlquery:s  ORDERBY attlist:o ordering:or
+sqlquery ::= sqlquery:s  ORDERBY orderinglist:os
 		{:
-		s.setOrderByList(o);
-		s.setOrderByOrdering(or);
+		s.setOrderByList(os);
 		parser.query=s;
 	
 		:}
@@ -104,8 +107,22 @@ attlist ::= attlist:as COMMA attribute:a
 		:}
 		;
 
-ordering ::= ASCENDING {: RESULT=true; :}
-          |  DESCENDING {: RESULT=false; :}
+orderinglist ::= orderinglist:os COMMA attribute:a ordering:o
+           {:
+                os.add(new Order((Attribute) a, o));
+                RESULT=os;
+           :}
+          |  attribute:a ordering:o {:
+                Vector os = new Vector();
+                os.add(new Order((Attribute) a, o));
+                RESULT=os;
+            :}
+          ;
+
+ordering ::= // empty
+            {: RESULT=OrderType.ASC; :}
+          | ASC {: RESULT=OrderType.ASC; :}
+          | DESC {: RESULT=OrderType.DESC; :}
           ;
 
 tablelist ::= tablelist:tlist COMMA ID:i

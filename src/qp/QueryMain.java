@@ -121,15 +121,7 @@ public class QueryMain {
 
         if (!sqlquery.getOrderByList().isEmpty()) {
             Schema schema = root.getSchema();
-            List<Order> orders = new ArrayList<>();
-
-            sqlquery.getOrderByList().forEach(a ->
-                orders.add(new Order((Attribute) a,
-                        sqlquery.isAscending
-                                ? Order.OrderType.ASC
-                                : Order.OrderType.DESC))
-            );
-
+            List<Order> orders = new ArrayList<>(sqlquery.getOrderByList());
             root = new ExternalSort(root, orders, numBuff);
             root.setSchema(schema);
         }

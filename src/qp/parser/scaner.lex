@@ -55,14 +55,14 @@ STRING_LITERAL=\"{CHAR}*\"
   return new Symbol(sym.ORDERBY,yyline,yychar,new TokenValue(yytext()));
 }
 
-<YYINITIAL,NEGATE> ASCENDING {
+<YYINITIAL,NEGATE> ASC {
   yybegin(YYINITIAL);
-  return new Symbol(sym.ASCENDING,yyline,yychar,new TokenValue(yytext()));
+  return new Symbol(sym.ASC,yyline,yychar,new TokenValue(yytext()));
 }
 
-<YYINITIAL,NEGATE> DESCENDING {
+<YYINITIAL,NEGATE> DESC {
   yybegin(YYINITIAL);
-  return new Symbol(sym.DESCENDING,yyline,yychar,new TokenValue(yytext()));
+  return new Symbol(sym.DESC,yyline,yychar,new TokenValue(yytext()));
 }
 
 
