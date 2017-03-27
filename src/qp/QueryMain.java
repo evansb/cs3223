@@ -4,6 +4,9 @@
 package qp;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import qp.utils.*;
 import qp.operators.*;
@@ -25,8 +28,7 @@ public class QueryMain {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String temp;
         try {
-//            temp = in.readLine();
-            temp = "256";
+            temp = in.readLine();
             int pageSize = Integer.parseInt(temp);
             Batch.setPageSize(pageSize);
         } catch (Exception e) {
@@ -58,7 +60,9 @@ public class QueryMain {
 
         // SQLQuery is the result of the parsing
         SQLQuery sqlquery = p.getSQLQuery();
+        int numOrderBy = sqlquery.getOrderByList().size();
         int numJoin = sqlquery.getNumJoin();
+        numJoin = Math.max(numJoin, numOrderBy > 0 ? 1: 0);
 
         /*
          If there are joins then assigns buffers to each join operator
@@ -67,11 +71,10 @@ public class QueryMain {
          As buffer manager is not implemented, just input the number of
          buffers available
         */
-        if (numJoin != 0) {
+        if (numJoin != 0 || numOrderBy != 0) {
             System.out.println("enter the number of buffers available");
             try {
-//                temp = in.readLine();
-                temp = "10";
+                temp = in.readLine();
                 int numBuff = Integer.parseInt(temp);
                 BufferManager bm = new BufferManager(numBuff, numJoin);
             } catch (Exception e) {
@@ -81,7 +84,7 @@ public class QueryMain {
 
         // Check the number of buffers available is enough or not **/
         int numBuff = BufferManager.getBuffersPerJoin();
-        if (numJoin > 0 && numBuff < 3) {
+        if ((numJoin > 0 || numOrderBy > 0) && numBuff < 3) {
             System.out.println("Minimum 3 buffers are required per a join operator ");
             System.exit(1);
         }
@@ -118,8 +121,16 @@ public class QueryMain {
 
         if (!sqlquery.getOrderByList().isEmpty()) {
             Schema schema = root.getSchema();
-            root = new OrderBy(root, sqlquery.getOrderByList(),
-                    sqlquery.isAscending, OpType.SORT);
+            List<Order> orders = new ArrayList<>();
+
+            sqlquery.getOrderByList().forEach(a ->
+                orders.add(new Order((Attribute) a,
+                        sqlquery.isAscending
+                                ? Order.OrderType.ASC
+                                : Order.OrderType.DESC))
+            );
+
+            root = new ExternalSort(root, orders, numBuff);
             root.setSchema(schema);
         }
 

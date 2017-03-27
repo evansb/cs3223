@@ -29,7 +29,7 @@ public class ExternalSort extends Operator {
     private int tupleSize;
     private int batchSize;
 
-    private static boolean FILE_CLEANUP = false;
+    private static boolean FILE_CLEANUP = true;
 
 
 
