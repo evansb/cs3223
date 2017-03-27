@@ -1,5 +1,6 @@
 package qp.operators;
 
+import qp.utils.AppendingObjectOutputStream;
 import qp.utils.Batch;
 import qp.utils.Schema;
 import qp.utils.Tuple;
@@ -248,7 +249,7 @@ public class ExternalSort extends Operator {
     private void appendRun(Batch run, File destination) {
         try {
             long before = destination.length();
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(destination, true));
+            ObjectOutputStream out = new AppendingObjectOutputStream(new FileOutputStream(destination, true));
             out.writeObject(run);
             long after = destination.length();
             assert before + 100 < after;

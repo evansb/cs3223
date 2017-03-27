@@ -12,6 +12,8 @@ import java.util.List;
  */
 public class SortMergeJoin extends Join {
 
+
+
     public SortMergeJoin(Join join) {
         super(join.getLeft(), join.getRight(), join.getCondition(), join.getOpType());
     }
@@ -31,7 +33,12 @@ public class SortMergeJoin extends Join {
             for (Batch b: results) {
                 for (int i = 0; i < b.size(); i++) {
                     Tuple t = b.elementAt(i);
-                    System.out.println(t.dataAt(0) + ", " + t.dataAt(1));
+//                    int idx = getLeft().getSchema().indexOf(getCondition().getLhs());
+                    for (Object o: t.data()) {
+                        System.out.print(o);
+                        System.out.print("\t");
+                    }
+                    System.out.println();
                 }
             }
         }
