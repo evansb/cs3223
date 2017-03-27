@@ -100,8 +100,12 @@ public class QueryMain {
          Use random Optimization algorithm to get a random optimized
          execution plan
          */
+        /*
         RandomOptimizer ro = new RandomOptimizer(sqlquery);
         Operator logicalRoot = ro.getOptimizedPlan();
+        */
+        GreedyOptimizer go = new GreedyOptimizer(sqlquery);
+        Operator logicalRoot = go.getOptimizedPlan();
         if (logicalRoot == null) {
             System.out.println("root is null");
             System.exit(1);
