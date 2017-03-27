@@ -434,9 +434,11 @@ public class RandomOptimizer {
 
                 case JoinType.SORTMERGE:
 
-                    NestedJoin sm = new NestedJoin((Join) node);
-                /* + other code */
-                    return sm;
+                    SortMergeJoin sortMergeJoin = new SortMergeJoin((Join) node);
+                    sortMergeJoin.setLeft(left);
+                    sortMergeJoin.setRight(right);
+                    sortMergeJoin.setNumBuff(numbuff);
+                    return sortMergeJoin;
 
                 case JoinType.HASHJOIN:
 

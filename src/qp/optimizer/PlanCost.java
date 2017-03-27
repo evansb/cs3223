@@ -153,7 +153,7 @@ public class PlanCost {
                 joincost = leftpages + ((int) Math.ceil(leftpages / (1.0 * blockSize))) * rightpages;
                 break;
             case JoinType.SORTMERGE:
-                joincost = Integer.MAX_VALUE;
+                joincost = 0; // Integer.MAX_VALUE; // TODO: Change this
                 break;
             case JoinType.HASHJOIN:
                 joincost = Integer.MAX_VALUE;
