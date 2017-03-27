@@ -104,7 +104,7 @@ public class ExternalSort extends Operator {
 
                 // read next batch
                 currentBatch = source.next();
-                
+
                 if (currentBatch == null) {
                     break;
                 }
