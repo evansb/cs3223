@@ -25,7 +25,8 @@ public class QueryMain {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String temp;
         try {
-            temp = in.readLine();
+//            temp = in.readLine();
+            temp = "256";
             int pageSize = Integer.parseInt(temp);
             Batch.setPageSize(pageSize);
         } catch (Exception e) {
@@ -69,7 +70,8 @@ public class QueryMain {
         if (numJoin != 0) {
             System.out.println("enter the number of buffers available");
             try {
-                temp = in.readLine();
+//                temp = in.readLine();
+                temp = "10";
                 int numBuff = Integer.parseInt(temp);
                 BufferManager bm = new BufferManager(numBuff, numJoin);
             } catch (Exception e) {
@@ -122,7 +124,8 @@ public class QueryMain {
 
 
         try {
-            temp = in.readLine();
+//            temp = in.readLine();
+            temp = "1";
             int flag = Integer.parseInt(temp);
             if (flag == 0) {
                 System.exit(1);
