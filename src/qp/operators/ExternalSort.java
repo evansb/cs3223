@@ -19,12 +19,16 @@ public class ExternalSort extends Operator {
     private Comparator<Tuple> comparator;
 
     private int fileNum;
+    private int roundNum;
     private List<File> sortedRuns;
 
     private ObjectInputStream iteratorInputStream;
 
     private int initialNumTuples;
     private int tuplesProcessedThisRound;
+
+    private static boolean FILE_CLEANUP = false;
+
 
     public ExternalSort(Operator source, List<Order> sortOrders, int numBuffers) {
         super(OpType.SORT);
@@ -40,11 +44,14 @@ public class ExternalSort extends Operator {
 
         // Initialization
         fileNum = 0;
+        roundNum = 0;
         sortedRuns = new ArrayList<>();
         comparator = composeComparator();
 
         // Phase 1
         generateSortedRuns();
+        roundNum++;
+        fileNum = 0;
 
         // Phase 2
         executeMerge();
@@ -117,6 +124,8 @@ public class ExternalSort extends Operator {
                 newSortedRuns.add(resultSortedRun);
             }
 
+            roundNum++;
+            fileNum = 0;
             assert initialNumTuples == tuplesProcessedThisRound;
 
             // Replace sorted runs with the newer batch
@@ -126,6 +135,8 @@ public class ExternalSort extends Operator {
     }
 
     private void clearSortedRuns(List<File> sortedRuns) {
+        if (!FILE_CLEANUP) return;
+
         for (File run : sortedRuns) {
             run.delete();
         }
@@ -231,7 +242,7 @@ public class ExternalSort extends Operator {
 
     private File writeRun(List<Batch> run) {
         try {
-            File temp = new File("EStemp-" + fileNum);
+            File temp = new File("EStemp-" + roundNum + "-" + fileNum);
             ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(temp));
             for (Batch batch: run) {
                 out.writeObject(batch);
