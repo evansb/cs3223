@@ -50,11 +50,21 @@ STRING_LITERAL=\"{CHAR}*\"
 }
    
 
-<YYINITIAL,NEGATE> GROUPBY {
+<YYINITIAL,NEGATE> ORDERBY {
   yybegin(YYINITIAL);
-  return new Symbol(sym.GROUPBY,yyline,yychar,new TokenValue(yytext()));
+  return new Symbol(sym.ORDERBY,yyline,yychar,new TokenValue(yytext()));
 }
-   
+
+<YYINITIAL,NEGATE> ASCENDING {
+  yybegin(YYINITIAL);
+  return new Symbol(sym.ASCENDING,yyline,yychar,new TokenValue(yytext()));
+}
+
+<YYINITIAL,NEGATE> DESCENDING {
+  yybegin(YYINITIAL);
+  return new Symbol(sym.DESCENDING,yyline,yychar,new TokenValue(yytext()));
+}
+
 
 <YYINITIAL,NEGATE> DISTINCT {
   yybegin(YYINITIAL);

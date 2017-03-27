@@ -37,7 +37,7 @@ public class RandomInitialPlan {
         fromlist = (Vector) sqlquery.getFromList();
         selectionlist = sqlquery.getSelectionList();
         joinlist = sqlquery.getJoinList();
-        groupbylist = sqlquery.getGroupByList();
+        groupbylist = sqlquery.getOrderByList();
         numJoin = joinlist.size();
 
 
