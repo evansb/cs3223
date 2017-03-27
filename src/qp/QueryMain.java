@@ -114,6 +114,13 @@ public class QueryMain {
         /* Preparing the execution plan */
         Operator root = RandomOptimizer.makeExecPlan(logicalRoot);
 
+        if (!sqlquery.getOrderByList().isEmpty()) {
+            Schema schema = root.getSchema();
+            root = new OrderBy(root, sqlquery.getOrderByList(),
+                    sqlquery.isAscending, OpType.SORT);
+            root.setSchema(schema);
+        }
+
         /* Print final Plan */
         System.out.println("----------------------Execution Plan----------------");
         Debug.PPrint(root);

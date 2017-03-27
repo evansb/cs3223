@@ -23,7 +23,7 @@ public class SQLQuery {
 
     Vector orderByList;        //List of attibutes in groupby clause
     boolean isDistinct = false;   // Whether distinct key word appeared in select clause
-    boolean isAscending = true;
+    public boolean isAscending = true;
 
 
     public SQLQuery(Vector list1, Vector list2, Vector list3, Vector list4) {

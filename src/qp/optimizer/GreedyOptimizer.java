@@ -105,11 +105,11 @@ public class GreedyOptimizer {
                 rsp.setOperator(select);
             });
 
-        Operator joinRoot = null;
+        Operator root = null;
 
         // No Join
         if (this.query.getJoinList().isEmpty()) {
-            joinRoot = relations.get(this.query.getFromList().firstElement().toString()).getOperator();
+            root = relations.get(this.query.getFromList().firstElement().toString()).getOperator();
         } else {
             // Create Left-Deep join tree sorted by tuple size.
             Map<String, List<Condition>> joinMap = new HashMap<>();
@@ -159,51 +159,51 @@ public class GreedyOptimizer {
                 for (Condition condition : conditions) {
                     RelationSchemaPair right = relations.get(((Attribute) condition.getRhs()).getTabName());
                     RelationSchemaPair left = relations.get(condition.getLhs().getTabName());
-                    if (joinRoot == null) {
-                        joinRoot = relation.getOperator();
+                    if (root == null) {
+                        root = relation.getOperator();
                     }
                     Join join;
-                    Set<Attribute> intersect = new HashSet<>(joinRoot.getSchema().getAttList());
+                    Set<Attribute> intersect = new HashSet<>(root.getSchema().getAttList());
                     Set<Attribute> leftAttrs = new HashSet<>(left.getSchema().getAttList());
                     intersect.retainAll(leftAttrs);
                     if (!intersect.isEmpty()) {
                         join = new Join(
-                            joinRoot,
+                            root,
                             right.getOperator(),
                             condition,
                             OpType.JOIN
                         );
-                        join.setSchema(joinRoot.getSchema().joinWith(right.getSchema()));
+                        join.setSchema(root.getSchema().joinWith(right.getSchema()));
                     } else {
                         condition.flip();
                         join = new Join(
-                            joinRoot,
+                            root,
                             left.getOperator(),
                             condition,
                             OpType.JOIN
                         );
-                        join.setSchema(joinRoot.getSchema().joinWith(left.getSchema()));
+                        join.setSchema(root.getSchema().joinWith(left.getSchema()));
                     }
                     join.setNodeIndex(joinNum);
                     joinNum++;
                     join.setJoinType(JoinType.BLOCKNESTED);
-                    joinRoot = join;
+                    root = join;
                 }
             }
         }
 
         Vector projectList = this.query.getProjectList();
-        if (projectList.isEmpty()) {
-            return joinRoot;
-        } else {
+        if (!projectList.isEmpty()) {
             Project project = new Project(
-                joinRoot,
+                root,
                 this.query.getProjectList(),
                 OpType.PROJECT
             );
-            Schema schema = joinRoot.getSchema().subSchema(projectList);
+            Schema schema = root.getSchema().subSchema(projectList);
             project.setSchema(schema);
-            return project;
+            root = project;
         }
+
+        return root;
     }
 }
