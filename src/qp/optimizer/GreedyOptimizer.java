@@ -101,7 +101,7 @@ public class GreedyOptimizer {
                     condition,
                     OpType.SELECT
                 );
-                select.setSchema(select.getSchema());
+                select.setSchema(rsp.getSchema());
                 rsp.setOperator(select);
             });
 

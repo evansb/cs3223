@@ -163,14 +163,12 @@ public class QueryMain {
 
         /* Print the schema of the result */
         Schema schema = root.getSchema();
-        Debug.PPrint(schema);
         printSchema(schema, out);
         Batch resultBatch;
 
         /* Print each tuple in the result */
         while ((resultBatch = root.next()) != null) {
             for (int i = 0; i < resultBatch.size(); i++) {
-                Debug.PPrint(resultBatch.elementAt(i));
                 printTuple(resultBatch.elementAt(i), out);
             }
         }
@@ -199,7 +197,7 @@ public class QueryMain {
     private static void printSchema(Schema schema, PrintWriter out) {
         for (int i = 0; i < schema.getNumCols(); i++) {
             Attribute attr = schema.getAttribute(i);
-            out.print(attr);
+            out.print(attr.getTabName() + '.' + attr.getColName());
         }
         out.println();
     }
