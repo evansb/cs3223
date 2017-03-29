@@ -39,7 +39,7 @@ public class SQLQuery {
         projectList = list1;
         fromList = list2;
         conditionList = list3;
-        orderByList = null;
+        orderByList = new Vector();
         splitConditionList(conditionList);
     }
 
@@ -49,7 +49,7 @@ public class SQLQuery {
         projectList = list1;
         fromList = list2;
         conditionList = null;
-        orderByList = null;
+        orderByList = new Vector();
         joinList = new Vector();
         selectionList = new Vector();
     }
