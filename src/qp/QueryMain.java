@@ -171,6 +171,7 @@ public class QueryMain {
         while ((resultBatch = root.next()) != null) {
             for (int i = 0; i < resultBatch.size(); i++) {
                 Debug.PPrint(resultBatch.elementAt(i));
+                printTuple(resultBatch.elementAt(i), out);
             }
         }
         root.close();
@@ -179,6 +180,20 @@ public class QueryMain {
         long endTime = System.currentTimeMillis();
         double executionTime = (endTime - startTime) / 1000.0;
         System.out.println("Execution time = " + executionTime);
+    }
+
+    private static void printTuple(Tuple t, PrintWriter out) {
+        for (int i = 0; i < t.data().size(); i++) {
+            Object data = t.dataAt(i);
+            if (data instanceof Integer) {
+                out.print(((Integer) data).intValue() + "\t");
+            } else if (data instanceof Float) {
+                out.print(((Float) data).floatValue() + "\t");
+            } else {
+                out.print(((String) data) + "\t");
+            }
+        }
+        out.println();
     }
 }
 
