@@ -138,10 +138,12 @@ public class RandomDB {
             for (i = 0; i < numtuple; i++) {
 //System.out.println("in table generation: "+i);
                 int numb = random.nextInt(range[0]);
-                while (pk[numb] == true) {
+                while (pk != null && pk[numb] == true) {
                     numb = random.nextInt(range[0]);
                 }
-                pk[numb] = true;
+                if (pk != null) {
+                    pk[numb] = true;
+                }
                 outtbl.print(numb + "\t");
 
                 for (int j = 1; j < numCol; j++) {
