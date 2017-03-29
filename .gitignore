@@ -2,3 +2,6 @@ out
 .idea
 
 QueryEvaluator.iml
+fixtures/*_console
+fixtures/*_out
+fixtures/BNJtemp-*

@@ -6,7 +6,6 @@ package qp;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import qp.utils.*;
 import qp.operators.*;

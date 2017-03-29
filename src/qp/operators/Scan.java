@@ -44,6 +44,9 @@ public class Scan extends Operator {
 
         /** num of tuples per batch**/
         int tuplesize = schema.getTupleSize();
+        if (Batch.getPageSize() <= tuplesize) {
+            throw new RuntimeException("Error: Tuple too large to fit in page");
+        }
         batchsize = Batch.getPageSize() / tuplesize;
 
         //System.out.println("Scan:----------Scanning:"+tabname);
