@@ -153,7 +153,7 @@ public class PlanCost {
                 joincost = leftpages + ((int) Math.ceil(leftpages / (1.0 * blockSize))) * rightpages;
                 break;
             case JoinType.SORTMERGE:
-                joincost = 0; // Integer.MAX_VALUE; // TODO: Change this
+                joincost = sortMergeJoinCost(leftpages, rightpages, numbuff);
                 break;
             case JoinType.HASHJOIN:
                 joincost = Integer.MAX_VALUE;
@@ -165,6 +165,17 @@ public class PlanCost {
 
         cost = cost + joincost;
         return outtuples;
+    }
+
+    private int sortMergeJoinCost(int leftpages, int rightpages, int numbuff) {
+        int leftsort = externalSortCost(leftpages, numbuff);
+        int rightsort = externalSortCost(rightpages, numbuff);
+        return leftsort + rightsort + leftpages + rightpages;
+    }
+
+    private int externalSortCost(int numpages, int numbuff) {
+        int numpasses = 1 + (int) Math.ceil(Math.log(Math.ceil(numpages / (1.0 * numbuff))) / Math.log(numpages -1) );
+        return numpasses * (2 * numpages);
     }
 
 

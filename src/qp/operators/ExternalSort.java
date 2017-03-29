@@ -36,7 +36,12 @@ public class ExternalSort extends Operator {
     private static boolean FILE_CLEANUP = true;
 
 
-
+    /**
+     * Sorts the tuples from source using multi-way merge sort algorithm.
+     * I/O cost, given N batches / pages of tuples:
+     *   - num of passes = 1 + ceil( log(ceil(N/B)) / log(B-1) )
+     *   - cost = 2N * num of passes
+     */
     public ExternalSort(Operator source, List<Order> sortOrders, int numBuffers) {
         super(OpType.SORT);
 
