@@ -205,6 +205,10 @@ public class SortMergeJoin extends Join {
         rightBufferOffset = 0;
         rightBuffer.clear();
         for (int i = 0; i < rightBufferSize; i++) {
+            if (i >= rightFiles.size()) {
+                break;
+            }
+
             Batch batch = readBatchFromFile(rightFiles.get(i));
             rightBuffer.add(batch);
         }
