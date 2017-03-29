@@ -94,7 +94,6 @@ public class BlockNestedJoin extends Join {
                                         this.rightCursor = j + 1;
                                     }
                                 }
-                                return outBatch;
                             }
                         }
                         this.rightCursor = 0;
@@ -190,7 +189,9 @@ public class BlockNestedJoin extends Join {
             this.leftBatch = this.leftBatches.poll();
             // Reset right materialized stream
             try {
-                this.in = new ObjectInputStream(new FileInputStream(this.tempFileName));
+                FileInputStream file = new FileInputStream(this.tempFileName);
+                InputStream buffer = new BufferedInputStream(file);
+                this.in = new ObjectInputStream(buffer);
                 this.rightEndReached = false;
             } catch (IOException e) {
                 System.err.println("BlockNestedJoin: Error in reading the file");
