@@ -36,7 +36,6 @@ public class Operator {
 
 
     public boolean open() {
-
         return true;
     }
 

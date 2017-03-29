@@ -138,8 +138,7 @@ public class QueryMain {
 
 
         try {
-//            temp = in.readLine();
-            temp = "1";
+            temp = in.readLine();
             int flag = Integer.parseInt(temp);
             if (flag == 0) {
                 System.exit(1);
