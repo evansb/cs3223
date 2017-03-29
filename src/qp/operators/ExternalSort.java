@@ -13,6 +13,10 @@ import java.util.*;
  */
 public class ExternalSort extends Operator {
 
+    private static int NUMBER_OF_INSTANCES = 0;
+
+    private int instanceNumber;
+
     private Operator source;
     private int numBuffers;
     private List<Order> sortOrders;
@@ -29,12 +33,15 @@ public class ExternalSort extends Operator {
     private int tupleSize;
     private int batchSize;
 
-    private static boolean FILE_CLEANUP = false;
+    private static boolean FILE_CLEANUP = true;
 
 
 
     public ExternalSort(Operator source, List<Order> sortOrders, int numBuffers) {
         super(OpType.SORT);
+
+        this.instanceNumber = NUMBER_OF_INSTANCES++;
+
         this.source = source;
         this.sortOrders = sortOrders;
         this.numBuffers = numBuffers;
@@ -57,7 +64,7 @@ public class ExternalSort extends Operator {
         generateSortedRuns();
         roundNum++;
         fileNum = 0;
-        System.out.printf("Initial number of tuples = %d\n", initialNumTuples);
+        // System.out.printf("Initial number of tuples = %d\n", initialNumTuples);
 
         // Phase 2
         executeMerge();
@@ -120,7 +127,7 @@ public class ExternalSort extends Operator {
         int numBuffersAvailable = numBuffers - 1;
 
         while (sortedRunFiles.size() > 1) {
-            System.out.printf("ROUND %d. Number of sorted runs = %d.\n", roundNum, sortedRunFiles.size());
+            // System.out.printf("ROUND %d. Number of sorted runs = %d.\n", roundNum, sortedRunFiles.size());
             int numberOfSortedRuns = sortedRunFiles.size();
             List<File> newSortedRuns = new ArrayList<>();
             tuplesProcessedThisRound = 0;
@@ -136,7 +143,7 @@ public class ExternalSort extends Operator {
 
             roundNum++;
             fileNum = 0;
-            System.out.printf("\tTuples processed = %d\n", tuplesProcessedThisRound);
+            // System.out.printf("\tTuples processed = %d\n", tuplesProcessedThisRound);
             assert initialNumTuples == tuplesProcessedThisRound;
 
             // Replace sorted runs with the newer batch
@@ -271,7 +278,7 @@ public class ExternalSort extends Operator {
     private File writeRun(List<Batch> run) {
         try {
             int numTuples = 0;
-            File temp = new File("EStemp-" + roundNum + "-" + fileNum);
+            File temp = new File("EStemp-" + instanceNumber + "-" + roundNum + "-" + fileNum);
             ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(temp));
             for (Batch batch: run) {
                 out.writeObject(batch);
@@ -279,7 +286,7 @@ public class ExternalSort extends Operator {
             }
             fileNum++;
             out.close();
-            System.out.printf("Initialized file %s with %d batches (%d tuples)\n", temp.getName(), run.size(), numTuples);
+            // System.out.printf("Initialized file %s with %d batches (%d tuples)\n", temp.getName(), run.size(), numTuples);
             return temp;
         } catch (IOException e) {
             System.out.println("ExternalSort: Error in writing the temporary file");
@@ -295,7 +302,7 @@ public class ExternalSort extends Operator {
             long after = destination.length();
             assert before + 100 < after;
             out.close();
-            System.out.printf("Append file %s with 1 batches (%d tuples)\n", destination.getName(), run.size());
+            // System.out.printf("Append file %s with 1 batches (%d tuples)\n", destination.getName(), run.size());
         } catch (IOException e) {
             e.printStackTrace();
         }

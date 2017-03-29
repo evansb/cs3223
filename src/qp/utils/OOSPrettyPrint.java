@@ -9,28 +9,31 @@ public class OOSPrettyPrint {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         File workingDir = new File(".");
-        for (File file: workingDir.listFiles()) {
-            if (file.getName().startsWith("EStemp-") && !file.getName().endsWith("pretty")) {
-                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
-                PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(file.getName() + "-pretty")));
-                try {
-                    while (true) {
-                        Batch batch = (Batch) ois.readObject();
-                        out.println("[");
-                        for (Object tupleObject: batch.tuples) {
-                            Tuple t = (Tuple) tupleObject;
-                            for (Object datum: t.data()) {
-                                out.print(datum);
-                                out.print("\t");
+        for (int i = 0; i < args.length; i++) {
+            String prefix = args[i];
+            for (File file: workingDir.listFiles()) {
+                if (file.getName().startsWith(prefix) && !file.getName().endsWith("pretty")) {
+                     ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+                    PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(file.getName() + "-pretty")));
+                    try {
+                        while (true) {
+                            Batch batch = (Batch) ois.readObject();
+                            out.println("[");
+                            for (Object tupleObject: batch.tuples) {
+                                Tuple t = (Tuple) tupleObject;
+                                for (Object datum: t.data()) {
+                                    out.print(datum);
+                                    out.print("\t");
+                                }
+                                out.println();
                             }
-                            out.println();
+                            out.println("]");
                         }
-                        out.println("]");
+                    } catch (EOFException e) {
                     }
-                } catch (EOFException e) {
+                    out.close();
+                    ois.close();
                 }
-                out.close();
-                ois.close();
             }
         }
     }
