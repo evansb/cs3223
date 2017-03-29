@@ -165,6 +165,7 @@ public class QueryMain {
         /* Print the schema of the result */
         Schema schema = root.getSchema();
         Debug.PPrint(schema);
+        printSchema(schema, out);
         Batch resultBatch;
 
         /* Print each tuple in the result */
@@ -192,6 +193,14 @@ public class QueryMain {
             } else {
                 out.print(((String) data) + "\t");
             }
+        }
+        out.println();
+    }
+
+    private static void printSchema(Schema schema, PrintWriter out) {
+        for (int i = 0; i < schema.getNumCols(); i++) {
+            Attribute attr = schema.getAttribute(i);
+            out.print(attr);
         }
         out.println();
     }
