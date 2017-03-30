@@ -5,26 +5,30 @@ import qp.utils.Batch;
 import qp.utils.Tuple;
 
 import java.io.*;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
+/**
+ * The BlockNested join uses (B-2) batches for the left table, 1 batch for right
+ * table, and 1 batch for output.
+ */
 public class BlockNestedJoin extends Join {
 
     private int batchSize; // Number of tuple per batch
 
-    private int leftIndex, rightIndex;
+    private int leftIndex, rightIndex; // Index of the join column in tuple
 
-    private String tempFileName;
+    private String tempFileName; // Temporary file for right table.
 
-    private Batch leftBatch;
-    private Batch rightBatch;
-    private Queue<Batch> leftBatches;
+    private Batch rightBatch; // Right batch
+
+    private List<Batch> leftBatches = new LinkedList<>(); // Left batches
+    private ArrayList<Tuple> leftTuples = new ArrayList<>(); // Flattened left batches
 
     private ObjectInputStream in;
 
+    // Variables used during the iteration
     private int leftCursor;
     private int rightCursor;
-
     private boolean leftEndReached;
     private boolean rightEndReached;
 
@@ -56,8 +60,8 @@ public class BlockNestedJoin extends Join {
 
             // End buffer reached, cycle the left buffer
             if (this.leftCursor == 0 && this.rightEndReached) {
-                this.selectNextLeftBuffer();
-                if (this.leftBatch == null) {
+                this.loadLeftBatches();
+                if (this.leftBatches.isEmpty()) {
                     this.leftEndReached = true;
                     return outBatch;
                 }
@@ -66,13 +70,15 @@ public class BlockNestedJoin extends Join {
             // Iterate right buffer until end
             while (!this.rightEndReached) {
                 try {
+                    // If we are in the beginning of left batches, read
+                    // a batch from materialized file.
                     if (this.leftCursor == 0 && this.rightCursor == 0) {
                         this.rightBatch = (Batch) this.in.readObject();
                     }
 
-                    for (int i = this.leftCursor; i < this.leftBatch.size(); i++) {
+                    for (int i = this.leftCursor; i < this.leftTuples.size(); i++) {
                         for (int j = this.rightCursor; j < this.rightBatch.size(); j++) {
-                            Tuple leftTuple = leftBatch.elementAt(i);
+                            Tuple leftTuple = leftTuples.get(i);
                             Tuple rightTuple = rightBatch.elementAt(j);
 
                             if (leftTuple.checkJoin(rightTuple, this.leftIndex, this.rightIndex)) {
@@ -80,19 +86,25 @@ public class BlockNestedJoin extends Join {
                                 outBatch.add(result);
 
                                 if (outBatch.isFull()) {
-                                    if (i == leftBatch.size() - 1 && j == rightBatch.size() - 1) {
+                                    // Left batches and right batch done
+                                    if (i == leftTuples.size() - 1 && j == rightBatch.size() - 1) {
                                         this.leftCursor = 0;
                                         this.rightCursor = 0;
-                                    } else if (i != leftBatch.size() - 1 && j == rightBatch.size() - 1) {
+
+                                        // Right batch done
+                                    } else if (i != leftTuples.size() - 1 && j == rightBatch.size() - 1) {
                                         this.leftCursor = i + 1;
                                         this.rightCursor = 0;
-                                    } else if (i == leftBatch.size() - 1 && j != rightBatch.size() - 1) {
+
+                                        //  Next tuple in right batch
+                                    } else if (i == leftTuples.size() - 1 && j != rightBatch.size() - 1) {
                                         this.leftCursor = i;
                                         this.rightCursor = j + 1;
                                     } else {
                                         this.leftCursor = i;
                                         this.rightCursor = j + 1;
                                     }
+                                    return outBatch;
                                 }
                             }
                         }
@@ -172,21 +184,22 @@ public class BlockNestedJoin extends Join {
         return "BNJTemp-" + id;
     }
 
-    private void selectNextLeftBuffer() {
-        if (this.leftBatches.isEmpty()) {
-            // Load new batches to left buffers
-            for (int i = 1; i <= this.numBuff - 2; i++) {
-                Batch b = left.next();
-                if (b != null) {
-                    this.leftBatches.offer(b);
-                } else {
-                    this.leftEndReached = true;
-                    break;
-                }
+    private void loadLeftBatches() {
+        // Load new batches to left buffers
+        this.leftBatches.clear();
+        this.leftTuples.clear();
+        for (int i = 1; i <= this.numBuff - 2; i++) {
+            Batch b = left.next();
+            if (b != null) {
+                this.leftBatches.add(b);
+            }
+        }
+        for (Batch b: this.leftBatches) {
+            for (int i = 0; i < b.size(); i++) {
+                this.leftTuples.add(b.elementAt(i));
             }
         }
         if (!this.leftBatches.isEmpty()) {
-            this.leftBatch = this.leftBatches.poll();
             // Reset right materialized stream
             try {
                 FileInputStream file = new FileInputStream(this.tempFileName);
@@ -197,8 +210,6 @@ public class BlockNestedJoin extends Join {
                 System.err.println("BlockNestedJoin: Error in reading the file");
                 System.exit(1);
             }
-        } else {
-            this.leftBatch = null;
         }
     }
 }

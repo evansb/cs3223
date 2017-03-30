@@ -16,6 +16,7 @@ public class GreedyOptimizer {
 
     private final SQLQuery query;
 
+    // Helper class to construct the plan tree
     private class RelationSchemaPair implements Comparable<RelationSchemaPair> {
         private final String name;
         private Operator operator;
@@ -77,6 +78,13 @@ public class GreedyOptimizer {
         this.query = query;
     }
 
+    /**
+     * Firstly the leaves of the tree is created from SCAN of all relations in FROM.
+     * Next, the SELECT is attached to the leaves
+     * Next, the JOIN using left deep tree, smallest relation first
+     * Finally the projection is attached to the root if there is any.
+     * @return
+     */
     public Operator getOptimizedPlan() {
 
         // Collect Relations from Joins
@@ -123,6 +131,7 @@ public class GreedyOptimizer {
                     joinMap.get(leftName).add(cond);
                 });
 
+            // Sort Relation based on tuple count
             List<RelationSchemaPair> sortedRelations = joinMap.keySet()
                 .stream()
                 .map(relations::get)
@@ -131,6 +140,7 @@ public class GreedyOptimizer {
 
             int joinNum = 0;
 
+            // Construct the left deep join tree.
             for (RelationSchemaPair relation: sortedRelations) {
                 List<Condition> conditions = new ArrayList<>();
 
@@ -192,7 +202,10 @@ public class GreedyOptimizer {
             }
         }
 
+
+        // Attach projection
         Vector projectList = this.query.getProjectList();
+
         if (!projectList.isEmpty()) {
             Project project = new Project(
                 root,
